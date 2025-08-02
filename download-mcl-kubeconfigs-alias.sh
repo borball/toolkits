@@ -25,8 +25,8 @@ WARNING="⚠️"
 INFO="ℹ️"
 SEPARATOR="━" 
 
-kubeconfig_dir="/etc/kubeconfigs"
-alias_file="/etc/kubeconfigs/oc-alias"
+kubeconfig_dir="~/kubeconfigs"
+alias_file="~/kubeconfigs/oc-alias"
 
 # Download kubeconfig for all managed clusters and create alias for each cluster 
 # Check if oc is installed
