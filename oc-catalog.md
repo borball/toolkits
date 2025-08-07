@@ -20,7 +20,7 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 ### Parameters
 
 - **version** - OpenShift version (default: 4.18)
-- **catalog** - Catalog name (default: redhat-operator)  
+- **catalog** - Catalog name  
 - **command** - Action to perform: `packages`, `channels`, or `versions`
 - **packages** - Optional: specific package names to filter results
 

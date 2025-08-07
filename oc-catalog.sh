@@ -173,7 +173,7 @@ if [ -z "$cmd" ]; then
     echo
     echo -e "${BOLD}Parameters:${NC}"
     echo -e "  ${GREEN}version${NC}   - OpenShift version (default: 4.18)"
-    echo -e "  ${GREEN}catalog${NC}   - Catalog name (default: redhat-operator)"
+    echo -e "  ${GREEN}catalog${NC}   - Catalog name"
     echo -e "  ${GREEN}command${NC}   - Action to perform"
     echo
     echo -e "${BOLD}Commands:${NC}"
