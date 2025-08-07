@@ -2,16 +2,46 @@
 # script to list all operators in a catalog and their channels, versions, etc.
 # use opm to implement it
 
-version=${1:-4.18}
-shift
-catalog=${1:-redhat-operator}
-shift
-cmd=$1
-shift
+# Default values
+version="4.18"
+catalog="redhat-operator"
+cmd=""
 packages=()
-while [ $# -gt 0 ]; do
-    packages+=($1)
-    shift
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--version)
+            version="$2"
+            shift 2
+            ;;
+        -c|--catalog)
+            catalog="$2"
+            shift 2
+            ;;
+        -h|--help)
+            cmd=""
+            break
+            ;;
+        packages|channels|versions)
+            if [ -z "$cmd" ]; then
+                cmd="$1"
+                shift
+            else
+                packages+=("$1")
+                shift
+            fi
+            ;;
+        *)
+            if [ -z "$cmd" ]; then
+                cmd="$1"
+                shift
+            else
+                packages+=("$1")
+                shift
+            fi
+            ;;
+    esac
 done
 
 # Color and formatting variables
@@ -169,12 +199,12 @@ versions() {
 
 if [ -z "$cmd" ]; then
     print_header "OpenShift Operator Catalog Tool" "🚀"
-    echo -e "${BOLD}Usage:${NC} $0 <version> <catalog> <command> [packages...]"
+    echo -e "${BOLD}Usage:${NC} $0 [options] <command> [packages...]"
     echo
-    echo -e "${BOLD}Parameters:${NC}"
-    echo -e "  ${GREEN}version${NC}   - OpenShift version (default: 4.18)"
-    echo -e "  ${GREEN}catalog${NC}   - Catalog name"
-    echo -e "  ${GREEN}command${NC}   - Action to perform"
+    echo -e "${BOLD}Options:${NC}"
+    echo -e "  ${GREEN}-v, --version${NC}   OpenShift version (default: 4.18)"
+    echo -e "  ${GREEN}-c, --catalog${NC}   Catalog name (default: redhat-operator)"
+    echo -e "  ${GREEN}-h, --help${NC}      Show this help message"
     echo
     echo -e "${BOLD}Commands:${NC}"
     echo -e "  📦 ${YELLOW}packages${NC}  - List operator packages and their default channels"
@@ -186,9 +216,11 @@ if [ -z "$cmd" ]; then
     echo -e "  • If no packages provided, all packages will be listed"
     echo
     echo -e "${BOLD}Examples:${NC}"
-    echo -e "  ${CYAN}$0 4.18 redhat-operator packages${NC}"
-    echo -e "  ${CYAN}$0 4.18 redhat-operator packages cluster-logging ptp-operator${NC}"
-    echo -e "  ${CYAN}$0 4.18 certified-operator packages sriov-fec${NC}"
+    echo -e "  ${CYAN}$0 packages${NC}                                    # Use defaults (4.18, redhat-operator)"
+    echo -e "  ${CYAN}$0 -v 4.17 packages${NC}                           # Different version"
+    echo -e "  ${CYAN}$0 -c certified-operator packages${NC}             # Different catalog"
+    echo -e "  ${CYAN}$0 -v 4.18 -c redhat-operator packages ptp-operator cluster-logging${NC}"
+    echo -e "  ${CYAN}$0 -c certified-operator packages sriov-fec${NC}   # Certified operator"
     echo
     exit 1
 fi

@@ -14,13 +14,17 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 ## Usage
 
 ```bash
-./oc-catalog.sh <version> <catalog> <command> [packages...]
+./oc-catalog.sh [options] <command> [packages...]
 ```
 
-### Parameters
+### Options
 
-- **version** - OpenShift version (default: 4.18)
-- **catalog** - Catalog name  
+- **-v, --version** - OpenShift version (default: 4.18)
+- **-c, --catalog** - Catalog name (default: redhat-operator)
+- **-h, --help** - Show help message
+
+### Commands
+
 - **command** - Action to perform: `packages`, `channels`, or `versions`
 - **packages** - Optional: specific package names to filter results
 
@@ -30,11 +34,14 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 Show operator packages and their default channels:
 
 ```bash
-# List all packages
-./oc-catalog.sh 4.18 redhat-operator packages
+# List all packages (using defaults: 4.18, redhat-operator)
+./oc-catalog.sh packages
 
 # List specific packages
-./oc-catalog.sh 4.18 redhat-operator packages ptp-operator cluster-logging
+./oc-catalog.sh packages ptp-operator cluster-logging
+
+# Use different catalog
+./oc-catalog.sh -c certified-operator packages
 ```
 
 **Output:**
@@ -54,11 +61,14 @@ Show operator packages and their default channels:
 Show all available channels for operators:
 
 ```bash
-# List all channels
-./oc-catalog.sh 4.18 redhat-operator channels
+# List all channels (using defaults)
+./oc-catalog.sh channels
 
 # List channels for specific packages
-./oc-catalog.sh 4.18 redhat-operator channels cluster-logging
+./oc-catalog.sh channels cluster-logging
+
+# Use different version
+./oc-catalog.sh -v 4.17 channels cluster-logging
 ```
 
 **Output:**
@@ -79,11 +89,14 @@ Show all available channels for operators:
 Show all available versions/bundles for operators:
 
 ```bash
-# List all versions
-./oc-catalog.sh 4.18 redhat-operator versions
+# List all versions (using defaults)
+./oc-catalog.sh versions
 
 # List versions for specific packages  
-./oc-catalog.sh 4.18 redhat-operator versions ptp-operator
+./oc-catalog.sh versions ptp-operator
+
+# Use different catalog and version
+./oc-catalog.sh -v 4.17 -c redhat-operator versions ptp-operator
 ```
 
 **Output:**
@@ -105,7 +118,7 @@ Show all available versions/bundles for operators:
 **Certified Operator Example:**
 ```bash
 # List versions for certified operator
-./oc-catalog.sh 4.18 certified-operator versions sriov-fec
+./oc-catalog.sh -c certified-operator versions sriov-fec
 ```
 
 **Output:**
@@ -130,28 +143,31 @@ Show all available versions/bundles for operators:
 
 ```bash
 # Get help
-./oc-catalog.sh
+./oc-catalog.sh --help
 
-# List all packages in OpenShift 4.18 Red Hat catalog
-./oc-catalog.sh 4.18 redhat-operator packages
+# List all packages (using defaults: 4.18, redhat-operator)
+./oc-catalog.sh packages
 
 # Check specific operators
-./oc-catalog.sh 4.18 redhat-operator packages ptp-operator cluster-logging
+./oc-catalog.sh packages ptp-operator cluster-logging
 
 # View channels for cluster logging
-./oc-catalog.sh 4.18 redhat-operator channels cluster-logging
+./oc-catalog.sh channels cluster-logging
 
 # See all versions of PTP operator
-./oc-catalog.sh 4.18 redhat-operator versions ptp-operator
+./oc-catalog.sh versions ptp-operator
 
 # Work with different OpenShift version
-./oc-catalog.sh 4.17 redhat-operator packages
+./oc-catalog.sh -v 4.17 packages
 
 # Use certified operator catalog
-./oc-catalog.sh 4.18 certified-operator packages
+./oc-catalog.sh -c certified-operator packages
 
 # Check certified operator (e.g., SR-IOV FEC operator)
-./oc-catalog.sh 4.18 certified-operator packages sriov-fec
+./oc-catalog.sh -c certified-operator packages sriov-fec
+
+# Combine options
+./oc-catalog.sh -v 4.17 -c certified-operator versions sriov-fec
 ```
 
 ## Requirements
