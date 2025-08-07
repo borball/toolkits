@@ -103,8 +103,16 @@ _init() {
         exit 1
     fi
     
-    _index="registry.redhat.io/redhat/${catalog}-index:v${version}"
-    local json_file="/tmp/${catalog}-${version}.json"
+    # Check if version is a SHA256 digest
+    if [[ "$version" == sha256:* ]]; then
+        _index="registry.redhat.io/redhat/${catalog}-index@${version}"
+        # Use SHA256 for cache filename (replace : and / with -)
+        local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
+        local json_file="/tmp/${catalog}-${cache_suffix}.json"
+    else
+        _index="registry.redhat.io/redhat/${catalog}-index:v${version}"
+        local json_file="/tmp/${catalog}-${version}.json"
+    fi
     
     if [ -f "$json_file" ]; then
         #if modified more than 120 minutes ago, re-render
@@ -119,10 +127,19 @@ _init() {
 }
 
 packages() {
-    print_header "OpenShift Operator Packages (${catalog}-${version})" "📦"
+    # Determine display name and json file path
+    if [[ "$version" == sha256:* ]]; then
+        local display_name="${catalog}@${version:0:19}..."
+        local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
+        local json_file="/tmp/${catalog}-${cache_suffix}.json"
+    else
+        local display_name="${catalog}-${version}"
+        local json_file="/tmp/${catalog}-${version}.json"
+    fi
+    
+    print_header "OpenShift Operator Packages (${display_name})" "📦"
     print_table_header "Package Name" "Default Channel" 55 30
     
-    local json_file="/tmp/${catalog}-${version}.json"
     local count=0
     
     if [ ${#packages[@]} -eq 0 ]; then
@@ -145,10 +162,19 @@ packages() {
 }
 
 channels() {
-    print_header "OpenShift Operator Channels (${catalog}-${version})" "📺"
+    # Determine display name and json file path
+    if [[ "$version" == sha256:* ]]; then
+        local display_name="${catalog}@${version:0:19}..."
+        local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
+        local json_file="/tmp/${catalog}-${cache_suffix}.json"
+    else
+        local display_name="${catalog}-${version}"
+        local json_file="/tmp/${catalog}-${version}.json"
+    fi
+    
+    print_header "OpenShift Operator Channels (${display_name})" "📺"
     print_table_header "Package Name" "Channel" 55 35
     
-    local json_file="/tmp/${catalog}-${version}.json"
     local count=0
     
     if [ ${#packages[@]} -eq 0 ]; then
@@ -171,10 +197,19 @@ channels() {
 }
 
 versions() {
-    print_header "OpenShift Operator Versions (${catalog}-${version})" "🔢"
+    # Determine display name and json file path
+    if [[ "$version" == sha256:* ]]; then
+        local display_name="${catalog}@${version:0:19}..."
+        local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
+        local json_file="/tmp/${catalog}-${cache_suffix}.json"
+    else
+        local display_name="${catalog}-${version}"
+        local json_file="/tmp/${catalog}-${version}.json"
+    fi
+    
+    print_header "OpenShift Operator Versions (${display_name})" "🔢"
     print_table_header "Package Name" "Version/Bundle" 55 45
     
-    local json_file="/tmp/${catalog}-${version}.json"
     local count=0
     
     if [ ${#packages[@]} -eq 0 ]; then
@@ -201,7 +236,8 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "${BOLD}Usage:${NC} $0 [options] <command> [packages...]"
     echo
     echo -e "${BOLD}Options:${NC}"
-    echo -e "  ${GREEN}-v${NC} <version>   OpenShift version (default: 4.18)"
+    echo -e "  ${GREEN}-v${NC} <version>   OpenShift version or SHA256 digest (default: 4.18)"
+    echo -e "                   Examples: 4.18, sha256:78c4590eaa7a8c75a08ece..."
     echo -e "  ${GREEN}-c${NC} <catalog>   Catalog name (default: redhat-operator)"
     echo -e "  ${GREEN}-h${NC}             Show this help message"
     echo
@@ -217,6 +253,7 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "${BOLD}Examples:${NC}"
     echo -e "  ${CYAN}$0 packages${NC}                                  # Use defaults (4.18, redhat-operator)"
     echo -e "  ${CYAN}$0 -v 4.17 packages${NC}                         # Different version"
+    echo -e "  ${CYAN}$0 -v sha256:78c4590eaa7a... packages${NC}       # Use SHA256 digest"
     echo -e "  ${CYAN}$0 -c certified-operator packages${NC}           # Different catalog"
     echo -e "  ${CYAN}$0 -v 4.18 -c redhat-operator packages ptp-operator cluster-logging${NC}"
     echo -e "  ${CYAN}$0 -c certified-operator packages sriov-fec${NC} # Certified operator"
