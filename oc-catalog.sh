@@ -5,16 +5,20 @@
 # Default values
 version="4.18"
 catalog="redhat-operator"
+index_image=""
 show_help=0
 
 # Parse options using getopts
-while getopts "v:c:h" opt; do
+while getopts "v:c:i:h" opt; do
     case $opt in
         v)
             version="$OPTARG"
             ;;
         c)
             catalog="$OPTARG"
+            ;;
+        i)
+            index_image="$OPTARG"
             ;;
         h)
             show_help=1
@@ -93,41 +97,49 @@ print_summary() {
 }
 
 _init() {
-    # Defensive check for required variables
-    if [ -z "$version" ]; then
-        echo -e "${RED}Error: Version parameter is required${NC}" >&2
-        exit 1
-    fi
-    if [ -z "$catalog" ]; then
-        echo -e "${RED}Error: Catalog parameter is required${NC}" >&2
-        exit 1
-    fi
-    
-    # Validate catalog name
-    local valid_catalogs=("redhat-operator" "certified-operator" "community-operator" "redhat-marketplace")
-    local catalog_valid=0
-    for valid_catalog in "${valid_catalogs[@]}"; do
-        if [ "$catalog" = "$valid_catalog" ]; then
-            catalog_valid=1
-            break
-        fi
-    done
-    
-    if [ $catalog_valid -eq 0 ]; then
-        echo -e "${RED}Error: Invalid catalog '$catalog'${NC}" >&2
-        echo -e "${RED}Valid catalogs are: ${valid_catalogs[*]}${NC}" >&2
-        exit 1
-    fi
-    
-    # Check if version is a SHA256 digest
-    if [[ "$version" == sha256:* ]]; then
-        _index="registry.redhat.io/redhat/${catalog}-index@${version}"
-        # Use SHA256 for cache filename (replace : and / with -)
-        local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
-        local json_file="/tmp/${catalog}-${cache_suffix}.json"
+    # If custom index image is provided, use it directly
+    if [ -n "$index_image" ]; then
+        _index="$index_image"
+        # Create a safe filename from the index image (replace special chars with -)
+        local safe_name=$(echo "$index_image" | sed 's/[:/]/-/g' | sed 's/@/-/g')
+        local json_file="/tmp/custom-index-${safe_name}.json"
     else
-        _index="registry.redhat.io/redhat/${catalog}-index:v${version}"
-        local json_file="/tmp/${catalog}-${version}.json"
+        # Defensive check for required variables when not using custom index
+        if [ -z "$version" ]; then
+            echo -e "${RED}Error: Version parameter is required when not using -i${NC}" >&2
+            exit 1
+        fi
+        if [ -z "$catalog" ]; then
+            echo -e "${RED}Error: Catalog parameter is required when not using -i${NC}" >&2
+            exit 1
+        fi
+        
+        # Validate catalog name
+        local valid_catalogs=("redhat-operator" "certified-operator" "community-operator" "redhat-marketplace")
+        local catalog_valid=0
+        for valid_catalog in "${valid_catalogs[@]}"; do
+            if [ "$catalog" = "$valid_catalog" ]; then
+                catalog_valid=1
+                break
+            fi
+        done
+        
+        if [ $catalog_valid -eq 0 ]; then
+            echo -e "${RED}Error: Invalid catalog '$catalog'${NC}" >&2
+            echo -e "${RED}Valid catalogs are: ${valid_catalogs[*]}${NC}" >&2
+            exit 1
+        fi
+        
+        # Check if version is a SHA256 digest
+        if [[ "$version" == sha256:* ]]; then
+            _index="registry.redhat.io/redhat/${catalog}-index@${version}"
+            # Use SHA256 for cache filename (replace : and / with -)
+            local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
+            local json_file="/tmp/${catalog}-${cache_suffix}.json"
+        else
+            _index="registry.redhat.io/redhat/${catalog}-index:v${version}"
+            local json_file="/tmp/${catalog}-${version}.json"
+        fi
     fi
     
     if [ -f "$json_file" ]; then
@@ -161,7 +173,11 @@ _init() {
 
 packages() {
     # Determine display name and json file path
-    if [[ "$version" == sha256:* ]]; then
+    if [ -n "$index_image" ]; then
+        local display_name="custom-index: $(echo "$index_image" | sed 's/.*\///' | cut -c1-40)..."
+        local safe_name=$(echo "$index_image" | sed 's/[:/]/-/g' | sed 's/@/-/g')
+        local json_file="/tmp/custom-index-${safe_name}.json"
+    elif [[ "$version" == sha256:* ]]; then
         local display_name="${catalog}@${version:0:19}..."
         local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
         local json_file="/tmp/${catalog}-${cache_suffix}.json"
@@ -196,7 +212,11 @@ packages() {
 
 channels() {
     # Determine display name and json file path
-    if [[ "$version" == sha256:* ]]; then
+    if [ -n "$index_image" ]; then
+        local display_name="custom-index: $(echo "$index_image" | sed 's/.*\///' | cut -c1-40)..."
+        local safe_name=$(echo "$index_image" | sed 's/[:/]/-/g' | sed 's/@/-/g')
+        local json_file="/tmp/custom-index-${safe_name}.json"
+    elif [[ "$version" == sha256:* ]]; then
         local display_name="${catalog}@${version:0:19}..."
         local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
         local json_file="/tmp/${catalog}-${cache_suffix}.json"
@@ -231,7 +251,11 @@ channels() {
 
 versions() {
     # Determine display name and json file path
-    if [[ "$version" == sha256:* ]]; then
+    if [ -n "$index_image" ]; then
+        local display_name="custom-index: $(echo "$index_image" | sed 's/.*\///' | cut -c1-40)..."
+        local safe_name=$(echo "$index_image" | sed 's/[:/]/-/g' | sed 's/@/-/g')
+        local json_file="/tmp/custom-index-${safe_name}.json"
+    elif [[ "$version" == sha256:* ]]; then
         local display_name="${catalog}@${version:0:19}..."
         local cache_suffix=$(echo "$version" | sed 's/[:/]/-/g')
         local json_file="/tmp/${catalog}-${cache_suffix}.json"
@@ -272,6 +296,8 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "  ${GREEN}-v${NC} <version>   OpenShift version or SHA256 digest (default: 4.18)"
     echo -e "                   Examples: 4.18, sha256:78c4590eaa7a8c75a08ece..."
     echo -e "  ${GREEN}-c${NC} <catalog>   Catalog name (default: redhat-operator)"
+    echo -e "  ${GREEN}-i${NC} <image>     Custom catalog index image (overrides -v and -c)"
+    echo -e "                   Example: registry.example.com/my-catalog:latest"
     echo -e "  ${GREEN}-h${NC}             Show this help message"
     echo
     echo -e "${BOLD}Commands:${NC}"
@@ -288,6 +314,7 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "  ${CYAN}$0 -v 4.17 packages${NC}                         # Different version"
     echo -e "  ${CYAN}$0 -v sha256:78c4590eaa7a... packages${NC}       # Use SHA256 digest"
     echo -e "  ${CYAN}$0 -c certified-operator packages${NC}           # Different catalog"
+    echo -e "  ${CYAN}$0 -i registry.example.com/my-catalog:v1.0 packages${NC} # Custom index"
     echo -e "  ${CYAN}$0 -v 4.18 -c redhat-operator packages ptp-operator cluster-logging${NC}"
     echo -e "  ${CYAN}$0 -c certified-operator packages sriov-fec${NC} # Certified operator"
     echo

@@ -23,12 +23,22 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
   - Version tag: `4.18`, `4.17`, etc.
   - SHA256 digest: `sha256:6462dd0a33055240e169044356899aaa...`
 - **-c** `<catalog>` - Catalog name (default: redhat-operator)
+- **-i** `<image>` - Custom catalog index image (overrides -v and -c)
+  - Example: `registry.example.com/my-catalog:latest`
 - **-h** - Show help message
 
 ### Commands
 
 - **command** - Action to perform: `packages`, `channels`, or `versions`
 - **packages** - Optional: specific package names to filter results
+
+## Custom Index Images
+
+The tool supports three ways to specify catalog sources:
+
+1. **Standard Red Hat Catalogs** (using `-v` and `-c`)
+2. **SHA256 Digests** (for immutable references)
+3. **Custom Index Images** (using `-i` for any registry)
 
 ## SHA256 Digest Support
 
@@ -50,6 +60,17 @@ The tool supports both version tags and SHA256 digests for precise catalog targe
 - 📋 **Audit trails** - Exact catalog version tracking
 - 🎯 **Precise targeting** - Reference specific catalog snapshots
 
+### Custom Index Images
+- **Format**: Any valid container image reference
+- **Image Reference**: User-specified (e.g., `registry.example.com/my-catalog:latest`)
+- **Use Case**: Private catalogs, custom operator collections, development/testing
+
+**Benefits of Custom Index Images:**
+- 🏢 **Private registries** - Use internal/private operator catalogs
+- 🧪 **Development/Testing** - Point to custom-built catalog images
+- 🔧 **Custom collections** - Curated operator sets for specific environments
+- 🌐 **Third-party catalogs** - Access non-Red Hat operator repositories
+
 ## Commands
 
 ### List Packages
@@ -64,6 +85,9 @@ Show operator packages and their default channels:
 
 # Use different catalog
 ./oc-catalog.sh -c certified-operator packages
+
+# Use custom index image
+./oc-catalog.sh -i registry.example.com/my-catalog:v1.0 packages
 ```
 
 **Output:**
@@ -94,6 +118,9 @@ Show all available channels for operators:
 
 # Use SHA256 digest for specific catalog snapshot
 ./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 channels cluster-logging
+
+# Use custom index image
+./oc-catalog.sh -i registry.example.com/my-catalog:latest channels cluster-logging
 ```
 
 **Output:**
@@ -125,6 +152,9 @@ Show all available versions/bundles for operators:
 
 # Use SHA256 digest for precise catalog targeting
 ./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 versions ptp-operator
+
+# Use custom index image
+./oc-catalog.sh -i registry.example.com/my-operators:v2.0 versions ptp-operator
 ```
 
 **Output:**
@@ -189,6 +219,25 @@ Show all available versions/bundles for operators:
 📊 Summary: 7 versions found
 ```
 
+**Custom Index Image Example:**
+```bash
+# Using custom index image shows different header format
+./oc-catalog.sh -i registry.example.com/my-catalog:v1.0 packages ptp-operator
+```
+
+**Output:**
+```
+📦 OpenShift Operator Packages (custom-index: my-catalog:v1.0...)
+==================================================
+┌─────────────────────────────────────────────────────────┬────────────────────────────────┐
+│ Package Name                                            │ Default Channel                │
+├─────────────────────────────────────────────────────────┼────────────────────────────────┤
+│ ptp-operator                                            │ stable                         │
+│ custom-operator                                         │ alpha                          │
+└─────────────────────────────────────────────────────────┴────────────────────────────────┘
+📊 Summary: 2 packages found
+```
+
 ## Examples
 
 ```bash
@@ -222,6 +271,12 @@ Show all available versions/bundles for operators:
 # Use SHA256 digest for reproducible builds
 ./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 packages ptp-operator
 
+# Use custom index image for private registry
+./oc-catalog.sh -i registry.example.com/my-catalog:v1.0 packages ptp-operator
+
+# Use development catalog
+./oc-catalog.sh -i localhost:5000/dev-catalog:latest packages
+
 # Catalog validation example (will show error)
 ./oc-catalog.sh -c invalid-catalog packages
 # Output: Error: Invalid catalog 'invalid-catalog'
@@ -251,7 +306,9 @@ Show all available versions/bundles for operators:
 
 The tool automatically caches catalog data in `/tmp/` and refreshes it every 2 hours to balance performance with data freshness.
 
-Cache files are named: `/tmp/{catalog}-{version}.json`
+Cache files are named: 
+- Standard catalogs: `/tmp/{catalog}-{version}.json`
+- Custom index images: `/tmp/custom-index-{safe-name}.json`
 
 ## Supported Catalogs
 
