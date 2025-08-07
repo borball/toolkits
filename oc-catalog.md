@@ -154,7 +154,7 @@ Cache files are named: `/tmp/{catalog}-{version}.json`
 
 ## Supported Catalogs
 
-- `redhat-operator` (default)
+- `redhat-operator`
 - `certified-operator`  
 - `community-operator`
 - `redhat-marketplace`
