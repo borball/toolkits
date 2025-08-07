@@ -19,7 +19,9 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 
 ### Options
 
-- **-v** `<version>` - OpenShift version (default: 4.18)
+- **-v** `<version>` - OpenShift version or SHA256 digest (default: 4.18)
+  - Version tag: `4.18`, `4.17`, etc.
+  - SHA256 digest: `sha256:6462dd0a33055240e169044356899aaa...`
 - **-c** `<catalog>` - Catalog name (default: redhat-operator)
 - **-h** - Show help message
 
@@ -27,6 +29,26 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 
 - **command** - Action to perform: `packages`, `channels`, or `versions`
 - **packages** - Optional: specific package names to filter results
+
+## SHA256 Digest Support
+
+The tool supports both version tags and SHA256 digests for precise catalog targeting:
+
+### Version Tags (Mutable)
+- **Format**: `4.18`, `4.17`, etc.
+- **Image Reference**: `registry.redhat.io/redhat/redhat-operator-index:v4.18`
+- **Use Case**: Latest updates for a specific OpenShift version
+
+### SHA256 Digests (Immutable)
+- **Format**: `sha256:6462dd0a33055240e169044356899aaa...`
+- **Image Reference**: `registry.redhat.io/redhat/redhat-operator-index@sha256:6462dd0a...`
+- **Use Case**: Reproducible builds, pinning to exact catalog snapshots
+
+**Benefits of SHA256 Digests:**
+- 🔒 **Immutable references** - Content never changes
+- 🔄 **Reproducible builds** - Same results every time
+- 📋 **Audit trails** - Exact catalog version tracking
+- 🎯 **Precise targeting** - Reference specific catalog snapshots
 
 ## Commands
 
@@ -69,6 +91,9 @@ Show all available channels for operators:
 
 # Use different version
 ./oc-catalog.sh -v 4.17 channels cluster-logging
+
+# Use SHA256 digest for specific catalog snapshot
+./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 channels cluster-logging
 ```
 
 **Output:**
@@ -97,6 +122,9 @@ Show all available versions/bundles for operators:
 
 # Use different catalog and version
 ./oc-catalog.sh -v 4.17 -c redhat-operator versions ptp-operator
+
+# Use SHA256 digest for precise catalog targeting
+./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 versions ptp-operator
 ```
 
 **Output:**
@@ -113,6 +141,28 @@ Show all available versions/bundles for operators:
 │ ptp-operator                                            │ ptp-operator.v4.18.0-202504021503             │
 └─────────────────────────────────────────────────────────┴───────────────────────────────────────────────┘
 📊 Summary: 5 versions found
+```
+
+**SHA256 Digest Example:**
+```bash
+# Using SHA256 digest shows different header format
+./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 versions ptp-operator
+```
+
+**Output:**
+```
+🔢 OpenShift Operator Versions (redhat-operator@sha256:6462dd0a...)
+==================================================
+┌─────────────────────────────────────────────────────────┬───────────────────────────────────────────────┐
+│ Package Name                                            │ Version/Bundle                                │
+├─────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ ptp-operator                                            │ ptp-operator.v4.14.0-202310201027             │
+│ ptp-operator                                            │ ptp-operator.v4.14.0-202311021650             │
+│ ptp-operator                                            │ ptp-operator.v4.14.0-202311092032             │
+│ ptp-operator                                            │ ptp-operator.v4.14.0-202311211133             │
+│ ptp-operator                                            │ ptp-operator.v4.14.0-202312052033             │
+└─────────────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+📊 Summary: 31 versions found
 ```
 
 **Certified Operator Example:**
@@ -168,6 +218,14 @@ Show all available versions/bundles for operators:
 
 # Combine options
 ./oc-catalog.sh -v 4.17 -c certified-operator versions sriov-fec
+
+# Use SHA256 digest for reproducible builds
+./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 packages ptp-operator
+
+# Catalog validation example (will show error)
+./oc-catalog.sh -c invalid-catalog packages
+# Output: Error: Invalid catalog 'invalid-catalog'
+#         Valid catalogs are: redhat-operator certified-operator community-operator redhat-marketplace
 ```
 
 ## Requirements
@@ -197,10 +255,14 @@ Cache files are named: `/tmp/{catalog}-{version}.json`
 
 ## Supported Catalogs
 
-- `redhat-operator`
-- `certified-operator`  
-- `community-operator`
-- `redhat-marketplace`
+The script validates catalog names and only accepts the following supported catalogs:
+
+- `redhat-operator` - Red Hat certified operators
+- `certified-operator` - Third-party certified operators  
+- `community-operator` - Community operators
+- `redhat-marketplace` - Red Hat Marketplace operators
+
+**Validation:** If you specify an invalid catalog name, the script will display an error message with the list of valid catalogs and exit.
 
 ---
 

@@ -103,6 +103,22 @@ _init() {
         exit 1
     fi
     
+    # Validate catalog name
+    local valid_catalogs=("redhat-operator" "certified-operator" "community-operator" "redhat-marketplace")
+    local catalog_valid=0
+    for valid_catalog in "${valid_catalogs[@]}"; do
+        if [ "$catalog" = "$valid_catalog" ]; then
+            catalog_valid=1
+            break
+        fi
+    done
+    
+    if [ $catalog_valid -eq 0 ]; then
+        echo -e "${RED}Error: Invalid catalog '$catalog'${NC}" >&2
+        echo -e "${RED}Valid catalogs are: ${valid_catalogs[*]}${NC}" >&2
+        exit 1
+    fi
+    
     # Check if version is a SHA256 digest
     if [[ "$version" == sha256:* ]]; then
         _index="registry.redhat.io/redhat/${catalog}-index@${version}"
@@ -118,11 +134,28 @@ _init() {
         #if modified more than 120 minutes ago, re-render
         if [ $(stat -c %Y "$json_file") -lt $(date -d "120 minutes ago" +%s) ]; then
             echo -e "${BLUE}Refreshing catalog data...${NC}" >&2
-            opm render $_index > "$json_file"
+            if ! opm render $_index > "$json_file" 2>/dev/null; then
+                echo -e "${RED}Error: Failed to refresh catalog data from $_index${NC}" >&2
+                echo -e "${RED}Please check if the catalog and version/digest are valid${NC}" >&2
+                rm -f "$json_file"  # Remove potentially corrupted file
+                exit 1
+            fi
         fi
     else
         echo -e "${BLUE}Downloading catalog data...${NC}" >&2
-        opm render $_index > "$json_file"
+        if ! opm render $_index > "$json_file" 2>/dev/null; then
+            echo -e "${RED}Error: Failed to download catalog data from $_index${NC}" >&2
+            echo -e "${RED}Please check if the catalog and version/digest are valid${NC}" >&2
+            rm -f "$json_file"  # Remove potentially corrupted file
+            exit 1
+        fi
+    fi
+    
+    # Verify the downloaded file is valid JSON and not empty
+    if [ ! -s "$json_file" ] || ! jq empty "$json_file" >/dev/null 2>&1; then
+        echo -e "${RED}Error: Downloaded catalog data is invalid or empty${NC}" >&2
+        rm -f "$json_file"
+        exit 1
     fi
 }
 
