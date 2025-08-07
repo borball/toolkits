@@ -19,9 +19,9 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 
 ### Options
 
-- **-v, --version** - OpenShift version (default: 4.18)
-- **-c, --catalog** - Catalog name (default: redhat-operator)
-- **-h, --help** - Show help message
+- **-v** `<version>` - OpenShift version (default: 4.18)
+- **-c** `<catalog>` - Catalog name (default: redhat-operator)
+- **-h** - Show help message
 
 ### Commands
 
@@ -143,7 +143,7 @@ Show all available versions/bundles for operators:
 
 ```bash
 # Get help
-./oc-catalog.sh --help
+./oc-catalog.sh -h
 
 # List all packages (using defaults: 4.18, redhat-operator)
 ./oc-catalog.sh packages

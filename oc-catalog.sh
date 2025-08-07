@@ -5,43 +5,42 @@
 # Default values
 version="4.18"
 catalog="redhat-operator"
-cmd=""
-packages=()
+show_help=0
 
-# Parse command line arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -v|--version)
-            version="$2"
-            shift 2
+# Parse options using getopts
+while getopts "v:c:h" opt; do
+    case $opt in
+        v)
+            version="$OPTARG"
             ;;
-        -c|--catalog)
-            catalog="$2"
-            shift 2
+        c)
+            catalog="$OPTARG"
             ;;
-        -h|--help)
-            cmd=""
-            break
+        h)
+            show_help=1
             ;;
-        packages|channels|versions)
-            if [ -z "$cmd" ]; then
-                cmd="$1"
-                shift
-            else
-                packages+=("$1")
-                shift
-            fi
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            show_help=1
             ;;
-        *)
-            if [ -z "$cmd" ]; then
-                cmd="$1"
-                shift
-            else
-                packages+=("$1")
-                shift
-            fi
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            show_help=1
             ;;
     esac
+done
+
+# Shift past the options
+shift $((OPTIND-1))
+
+# Get command and packages from remaining arguments
+cmd="$1"
+shift 2>/dev/null
+
+packages=()
+while [ $# -gt 0 ]; do
+    packages+=("$1")
+    shift
 done
 
 # Color and formatting variables
@@ -197,14 +196,14 @@ versions() {
     echo
 }
 
-if [ -z "$cmd" ]; then
+if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     print_header "OpenShift Operator Catalog Tool" "🚀"
     echo -e "${BOLD}Usage:${NC} $0 [options] <command> [packages...]"
     echo
     echo -e "${BOLD}Options:${NC}"
-    echo -e "  ${GREEN}-v, --version${NC}   OpenShift version (default: 4.18)"
-    echo -e "  ${GREEN}-c, --catalog${NC}   Catalog name (default: redhat-operator)"
-    echo -e "  ${GREEN}-h, --help${NC}      Show this help message"
+    echo -e "  ${GREEN}-v${NC} <version>   OpenShift version (default: 4.18)"
+    echo -e "  ${GREEN}-c${NC} <catalog>   Catalog name (default: redhat-operator)"
+    echo -e "  ${GREEN}-h${NC}             Show this help message"
     echo
     echo -e "${BOLD}Commands:${NC}"
     echo -e "  📦 ${YELLOW}packages${NC}  - List operator packages and their default channels"
@@ -216,11 +215,11 @@ if [ -z "$cmd" ]; then
     echo -e "  • If no packages provided, all packages will be listed"
     echo
     echo -e "${BOLD}Examples:${NC}"
-    echo -e "  ${CYAN}$0 packages${NC}                                    # Use defaults (4.18, redhat-operator)"
-    echo -e "  ${CYAN}$0 -v 4.17 packages${NC}                           # Different version"
-    echo -e "  ${CYAN}$0 -c certified-operator packages${NC}             # Different catalog"
+    echo -e "  ${CYAN}$0 packages${NC}                                  # Use defaults (4.18, redhat-operator)"
+    echo -e "  ${CYAN}$0 -v 4.17 packages${NC}                         # Different version"
+    echo -e "  ${CYAN}$0 -c certified-operator packages${NC}           # Different catalog"
     echo -e "  ${CYAN}$0 -v 4.18 -c redhat-operator packages ptp-operator cluster-logging${NC}"
-    echo -e "  ${CYAN}$0 -c certified-operator packages sriov-fec${NC}   # Certified operator"
+    echo -e "  ${CYAN}$0 -c certified-operator packages sriov-fec${NC} # Certified operator"
     echo
     exit 1
 fi
