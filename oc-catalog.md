@@ -125,6 +125,9 @@ Show all available versions/bundles for operators:
 
 # Use certified operator catalog
 ./oc-catalog.sh 4.18 certified-operator packages
+
+# Check certified operator (e.g., SR-IOV FEC operator)
+./oc-catalog.sh 4.18 certified-operator packages sriov-fec
 ```
 
 ## Requirements

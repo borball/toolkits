@@ -188,7 +188,7 @@ if [ -z "$cmd" ]; then
     echo -e "${BOLD}Examples:${NC}"
     echo -e "  ${CYAN}$0 4.18 redhat-operator packages${NC}"
     echo -e "  ${CYAN}$0 4.18 redhat-operator packages cluster-logging ptp-operator${NC}"
-    echo -e "  ${CYAN}$0 4.17 certified-operator channels elasticsearch-operator${NC}"
+    echo -e "  ${CYAN}$0 4.18 certified-operator packages sriov-fec${NC}"
     echo
     exit 1
 fi
