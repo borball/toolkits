@@ -25,8 +25,8 @@ WARNING="⚠️"
 INFO="ℹ️"
 SEPARATOR="━" 
 
-kubeconfig_dir="~/kubeconfigs"
-alias_file="~/kubeconfigs/oc-alias"
+kubeconfig_dir="$HOME/kubeconfigs"
+alias_file="$HOME/kubeconfigs/oc-alias"
 
 # Download kubeconfig for all managed clusters and create alias for each cluster 
 # Check if oc is installed
@@ -37,9 +37,9 @@ if ! command -v oc &> /dev/null; then
 fi
 
 # Check if kubeconfig directory exists
-if [ ! -d $kubeconfig_dir ]; then
+if [ ! -d "$kubeconfig_dir" ]; then
     echo -e "${YELLOW}${CONFIG} Creating kubeconfig directory: ${BOLD}$kubeconfig_dir${NC}"
-    mkdir -p $kubeconfig_dir
+    mkdir -p "$kubeconfig_dir"
 fi
 
 download_kubeconfigs_and_create_alias() {
@@ -68,12 +68,12 @@ download_kubeconfigs_and_create_alias() {
     echo -e "${GREEN}${SUCCESS} Found ${BOLD}$cluster_count${NC}${GREEN} managed clusters${NC}\n"
     
     echo -e "${BLUE}${DOWNLOAD} Starting kubeconfig downloads...${NC}\n"
-    echo "#oc alias for managed clusters" > $alias_file
+    echo "#oc alias for managed clusters" > "$alias_file"
     for cluster in $managed_clusters; do
         echo -e "${YELLOW}${CLUSTER} Processing cluster: ${BOLD}$cluster${NC}"
         
         # Download kubeconfig for the cluster
-        if oc get secret -n $cluster $cluster-admin-kubeconfig -o jsonpath='{.data.kubeconfig}' | base64 -d > $kubeconfig_dir/$cluster.kubeconfig 2>/dev/null; then
+        if oc get secret -n $cluster $cluster-admin-kubeconfig -o jsonpath='{.data.kubeconfig}' | base64 -d > "$kubeconfig_dir/$cluster.kubeconfig" 2>/dev/null; then
             echo -e "  ${GREEN}${SUCCESS} Downloaded kubeconfig for ${BOLD}$cluster${NC}"
         else
             echo -e "  ${RED}${ERROR} Failed to download kubeconfig for ${BOLD}$cluster${NC}"
@@ -81,14 +81,14 @@ download_kubeconfigs_and_create_alias() {
         fi
         
         # Create alias for the cluster
-        echo "alias oc-$cluster='oc --kubeconfig $kubeconfig_dir/$cluster.kubeconfig'" >> $alias_file
+        echo "alias oc-$cluster='oc --kubeconfig $kubeconfig_dir/$cluster.kubeconfig'" >> "$alias_file"
         echo -e "  ${BLUE}${CONFIG} Created oc alias: ${BOLD}oc-$cluster${NC}"
     done
     
     echo -e "\n${CYAN}${CONFIG} Creating cluster switch aliases...${NC}"
-    echo "#alias to switch to managed clusters" >> $alias_file
+    echo "#alias to switch to managed clusters" >> "$alias_file"
     for cluster in $managed_clusters; do
-        echo "alias $cluster='export KUBECONFIG=$kubeconfig_dir/$cluster.kubeconfig'" >> $alias_file
+        echo "alias $cluster='export KUBECONFIG=$kubeconfig_dir/$cluster.kubeconfig'" >> "$alias_file"
         echo -e "${PURPLE}${CONFIG} Created switch alias: ${BOLD}$cluster${NC}"
     done
 
