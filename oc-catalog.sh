@@ -144,7 +144,7 @@ _init() {
     
     if [ -f "$json_file" ]; then
         #if modified more than 120 minutes ago, re-render
-        if [ $(stat -c %Y "$json_file") -lt $(date -d "120 minutes ago" +%s) ]; then
+        if [ $(stat -c %Y "$json_file") -lt $(date -d "1200 minutes ago" +%s) ]; then
             echo -e "${BLUE}Refreshing catalog data...${NC}" >&2
             if ! opm render $_index > "$json_file" 2>/dev/null; then
                 echo -e "${RED}Error: Failed to refresh catalog data from $_index${NC}" >&2
@@ -288,6 +288,18 @@ versions() {
     echo
 }
 
+hub() {
+    # Set packages array with hub packages and call versions function
+    packages=("odf-operator" "openshift-gitops-operator" "topology-aware-lifecycle-manager" "local-storage-operator" "cluster-logging" "amq-streams" "amq-streams-console" "advanced-cluster-management")
+    versions
+}
+
+cloudran() {
+    # Set packages array with cloudran packages and call versions function
+    packages=("ptp-operator" "sriov-network-operator" "local-storage-operator" "cluster-logging" "lifecycle-agent" "redhat-oadp-operator")
+    versions
+}
+
 if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     print_header "OpenShift Operator Catalog Tool" "🚀"
     echo -e "${BOLD}Usage:${NC} $0 [options] <command> [packages...]"
@@ -304,6 +316,8 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "  📦 ${YELLOW}packages${NC}  - List operator packages and their default channels"
     echo -e "  📺 ${YELLOW}channels${NC}  - List all available channels for packages"
     echo -e "  🔢 ${YELLOW}versions${NC}  - List all available versions/bundles for packages"
+    echo -e "  🏢 ${YELLOW}hub${NC}       - List available versions for hub packages"
+    echo -e "  📡 ${YELLOW}cloudran${NC}  - List available versions for cloudran packages"
     echo
     echo -e "${BOLD}Package Arguments:${NC}"
     echo -e "  • Specify one or more package names to filter results"
@@ -317,6 +331,8 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "  ${CYAN}$0 -i registry.example.com/my-catalog:v1.0 packages${NC} # Custom index"
     echo -e "  ${CYAN}$0 -v 4.18 -c redhat-operator packages ptp-operator cluster-logging${NC}"
     echo -e "  ${CYAN}$0 -c certified-operator packages sriov-fec${NC} # Certified operator"
+    echo -e "  ${CYAN}$0 hub${NC}                                       # List all hub operator versions"
+    echo -e "  ${CYAN}$0 cloudran${NC}                                  # List all cloudran operator versions"
     echo
     exit 1
 fi

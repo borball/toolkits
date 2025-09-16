@@ -9,7 +9,7 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 - 🔢 **View all versions/bundles** available for operators
 - 🎨 **Beautiful table formatting** with colors and Unicode borders
 - 📊 **Summary statistics** showing count of results
-- 🚀 **Smart caching** - automatically refreshes catalog data every 2 hours
+- 🚀 **Smart caching** - automatically refreshes catalog data every 20 hours
 
 ## Usage
 
@@ -29,8 +29,8 @@ A beautiful command-line tool for exploring OpenShift operator catalogs with pro
 
 ### Commands
 
-- **command** - Action to perform: `packages`, `channels`, or `versions`
-- **packages** - Optional: specific package names to filter results
+- **command** - Action to perform: `packages`, `channels`, `versions`, `hub`, or `cloudran`
+- **packages** - Optional: specific package names to filter results (not used with `hub` or `cloudran`)
 
 ## Custom Index Images
 
@@ -219,6 +219,88 @@ Show all available versions/bundles for operators:
 📊 Summary: 7 versions found
 ```
 
+### List Hub Operator Versions
+Show available versions for common hub operators:
+
+```bash
+# List versions for all hub operators
+./oc-catalog.sh hub
+
+# Use different version
+./oc-catalog.sh -v 4.17 hub
+
+# Use SHA256 digest
+./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 hub
+```
+
+**Output:**
+```
+🔢 OpenShift Operator Versions (redhat-operator-4.18)
+==================================================
+┌─────────────────────────────────────────────────────────┬───────────────────────────────────────────────┐
+│ Package Name                                            │ Version/Bundle                                │
+├─────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ odf-operator                                            │ odf-operator.v4.18.0-202501230001             │
+│ openshift-gitops-operator                               │ openshift-gitops-operator.v1.15.1             │
+│ topology-aware-lifecycle-manager                        │ topology-aware-lifecycle-manager.v4.18.0      │
+│ local-storage-operator                                  │ local-storage-operator.v4.18.0-202501230001   │
+│ cluster-logging                                         │ cluster-logging.v6.3.0-202501230001           │
+│ amq-streams                                             │ amq-streams.v2.9.0-0                          │
+│ amq-streams-console                                     │ amq-streams-console.v0.1.0                    │
+│ advanced-cluster-management                             │ advanced-cluster-management.v2.12.0            │
+└─────────────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+📊 Summary: 8 versions found
+```
+
+**Hub Operators Included:**
+- `odf-operator` - OpenShift Data Foundation
+- `openshift-gitops-operator` - OpenShift GitOps (ArgoCD)
+- `topology-aware-lifecycle-manager` - Topology Aware Lifecycle Manager
+- `local-storage-operator` - Local Storage Operator
+- `cluster-logging` - Cluster Logging
+- `amq-streams` - AMQ Streams (Kafka)
+- `amq-streams-console` - AMQ Streams Console
+- `advanced-cluster-management` - Advanced Cluster Management
+
+### List CloudRAN Operator Versions
+Show available versions for common CloudRAN operators:
+
+```bash
+# List versions for all CloudRAN operators
+./oc-catalog.sh cloudran
+
+# Use different version
+./oc-catalog.sh -v 4.17 cloudran
+
+# Use SHA256 digest
+./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 cloudran
+```
+
+**Output:**
+```
+🔢 OpenShift Operator Versions (redhat-operator-4.18)
+==================================================
+┌─────────────────────────────────────────────────────────┬───────────────────────────────────────────────┐
+│ Package Name                                            │ Version/Bundle                                │
+├─────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ ptp-operator                                            │ ptp-operator.v4.18.0-202501230001             │
+│ sriov-network-operator                                  │ sriov-network-operator.v4.18.0-202501230001   │
+│ local-storage-operator                                  │ local-storage-operator.v4.18.0-202501230001   │
+│ cluster-logging                                         │ cluster-logging.v6.3.0-202501230001           │
+│ lifecycle-agent                                         │ lifecycle-agent.v4.18.0-202501230001          │
+│ redhat-oadp-operator                                    │ redhat-oadp-operator.v1.5.0                   │
+└─────────────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+📊 Summary: 6 versions found
+```
+
+**CloudRAN Operators Included:**
+- `ptp-operator` - Precision Time Protocol Operator
+- `sriov-network-operator` - SR-IOV Network Operator
+- `local-storage-operator` - Local Storage Operator
+- `cluster-logging` - Cluster Logging
+- `lifecycle-agent` - Lifecycle Agent
+- `redhat-oadp-operator` - OADP (OpenShift API for Data Protection) Operator
+
 **Custom Index Image Example:**
 ```bash
 # Using custom index image shows different header format
@@ -277,10 +359,67 @@ Show all available versions/bundles for operators:
 # Use development catalog
 ./oc-catalog.sh -i localhost:5000/dev-catalog:latest packages
 
+# List all hub operator versions (predefined set)
+./oc-catalog.sh hub
+
+# List all CloudRAN operator versions (predefined set)  
+./oc-catalog.sh cloudran
+
+# Use different version with hub operators
+./oc-catalog.sh -v 4.17 hub
+
+# Use SHA256 digest with CloudRAN operators
+./oc-catalog.sh -v sha256:6462dd0a33055240e169044356899aaa76696fe8e58a51c95b42f0012ba6a1f7 cloudran
+
 # Catalog validation example (will show error)
 ./oc-catalog.sh -c invalid-catalog packages
 # Output: Error: Invalid catalog 'invalid-catalog'
 #         Valid catalogs are: redhat-operator certified-operator community-operator redhat-marketplace
+```
+
+## Help Output
+
+Running the script with `-h` or no arguments shows the complete help message:
+
+```bash
+./oc-catalog.sh -h
+```
+
+**Output:**
+```
+🚀 OpenShift Operator Catalog Tool
+==================================================
+Usage: ./oc-catalog.sh [options] <command> [packages...]
+
+Options:
+  -v <version>   OpenShift version or SHA256 digest (default: 4.18)
+                   Examples: 4.18, sha256:78c4590eaa7a8c75a08ece...
+  -c <catalog>   Catalog name (default: redhat-operator)
+  -i <image>     Custom catalog index image (overrides -v and -c)
+                   Example: registry.example.com/my-catalog:latest
+  -h             Show this help message
+
+Commands:
+  📦 packages  - List operator packages and their default channels
+  📺 channels  - List all available channels for packages
+  🔢 versions  - List all available versions/bundles for packages
+  🏢 hub       - List available versions for hub packages
+  📡 cloudran  - List available versions for cloudran packages
+
+Package Arguments:
+  • Specify one or more package names to filter results
+  • If no packages provided, all packages will be listed
+
+Examples:
+  ./oc-catalog.sh packages                                  # Use defaults (4.18, redhat-operator)
+  ./oc-catalog.sh -v 4.17 packages                         # Different version
+  ./oc-catalog.sh -v sha256:78c4590eaa7a... packages       # Use SHA256 digest
+  ./oc-catalog.sh -c certified-operator packages           # Different catalog
+  ./oc-catalog.sh -i registry.example.com/my-catalog:v1.0 packages # Custom index
+  ./oc-catalog.sh -v 4.18 -c redhat-operator packages ptp-operator cluster-logging
+  ./oc-catalog.sh -c certified-operator packages sriov-fec # Certified operator
+  ./oc-catalog.sh hub                                       # List all hub operator versions
+  ./oc-catalog.sh cloudran                                  # List all cloudran operator versions
 ```
 
 ## Requirements
@@ -304,7 +443,7 @@ Show all available versions/bundles for operators:
 
 ## Caching
 
-The tool automatically caches catalog data in `/tmp/` and refreshes it every 2 hours to balance performance with data freshness.
+The tool automatically caches catalog data in `/tmp/` and refreshes it every 20 hours to balance performance with data freshness.
 
 Cache files are named: 
 - Standard catalogs: `/tmp/{catalog}-{version}.json`
