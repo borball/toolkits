@@ -7,9 +7,10 @@ version="4.18"
 catalog="redhat-operator"
 index_image=""
 show_help=0
+limit=""
 
 # Parse options using getopts
-while getopts "v:c:i:h" opt; do
+while getopts "v:c:i:l:h" opt; do
     case $opt in
         v)
             version="$OPTARG"
@@ -19,6 +20,9 @@ while getopts "v:c:i:h" opt; do
             ;;
         i)
             index_image="$OPTARG"
+            ;;
+        l)
+            limit="$OPTARG"
             ;;
         h)
             show_help=1
@@ -192,16 +196,30 @@ packages() {
     local count=0
     
     if [ ${#packages[@]} -eq 0 ]; then
-        while IFS=$'\t' read -r name channel; do
-            print_table_row "$name" "$channel" 55 30
-            ((count++))
-        done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.package")|[.name,.defaultChannel])|@tsv')
-    else
-        for package in ${packages[@]}; do
+        if [ -n "$limit" ]; then
             while IFS=$'\t' read -r name channel; do
                 print_table_row "$name" "$channel" 55 30
                 ((count++))
-            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.package" and .name=="'$package'")|[.name,.defaultChannel])|@tsv')
+            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.package")|[.name,.defaultChannel])|@tsv' | head -n "$limit")
+        else
+            while IFS=$'\t' read -r name channel; do
+                print_table_row "$name" "$channel" 55 30
+                ((count++))
+            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.package")|[.name,.defaultChannel])|@tsv')
+        fi
+    else
+        for package in ${packages[@]}; do
+            if [ -n "$limit" ]; then
+                while IFS=$'\t' read -r name channel; do
+                    print_table_row "$name" "$channel" 55 30
+                    ((count++))
+                done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.package" and .name=="'$package'")|[.name,.defaultChannel])|@tsv' | head -n "$limit")
+            else
+                while IFS=$'\t' read -r name channel; do
+                    print_table_row "$name" "$channel" 55 30
+                    ((count++))
+                done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.package" and .name=="'$package'")|[.name,.defaultChannel])|@tsv')
+            fi
         done
     fi
     
@@ -231,16 +249,30 @@ channels() {
     local count=0
     
     if [ ${#packages[@]} -eq 0 ]; then
-        while IFS=$'\t' read -r package channel; do
-            print_table_row "$package" "$channel" 55 35
-            ((count++))
-        done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.channel")|[.package,.name])|@tsv')
+        if [ -n "$limit" ]; then
+            while IFS=$'\t' read -r package channel; do
+                print_table_row "$package" "$channel" 55 35
+                ((count++))
+            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.channel")|[.package,.name])|@tsv' | head -n "$limit")
+        else
+            while IFS=$'\t' read -r package channel; do
+                print_table_row "$package" "$channel" 55 35
+                ((count++))
+            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.channel")|[.package,.name])|@tsv')
+        fi
     else
         for package in ${packages[@]}; do
-            while IFS=$'\t' read -r pkg channel; do
-                print_table_row "$pkg" "$channel" 55 35
-                ((count++))
-            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.channel" and .package=="'$package'")|[.package,.name])|@tsv')
+            if [ -n "$limit" ]; then
+                while IFS=$'\t' read -r pkg channel; do
+                    print_table_row "$pkg" "$channel" 55 35
+                    ((count++))
+                done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.channel" and .package=="'$package'")|[.package,.name])|@tsv' | head -n "$limit")
+            else
+                while IFS=$'\t' read -r pkg channel; do
+                    print_table_row "$pkg" "$channel" 55 35
+                    ((count++))
+                done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.channel" and .package=="'$package'")|[.package,.name])|@tsv')
+            fi
         done
     fi
     
@@ -270,16 +302,34 @@ versions() {
     local count=0
     
     if [ ${#packages[@]} -eq 0 ]; then
-        while IFS=$'\t' read -r package ver; do
-            print_table_row "$package" "$ver" 55 45
-            ((count++))
-        done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.bundle")|[.package,.name])|@tsv')
+        if [ -n "$limit" ]; then
+            # Get all unique packages first, then limit last N versions per package (most recent)
+            local all_packages=($(cat "$json_file" | jq -cr '.|select(.schema=="olm.bundle")|.package' | sort -u))
+            for pkg in "${all_packages[@]}"; do
+                while IFS=$'\t' read -r package version name; do
+                    print_table_row "$package" "$name" 55 45
+                    ((count++))
+                done < <(cat "$json_file" | jq -cr 'select(.schema=="olm.bundle" and .package=="'$pkg'") | [ .package, ((.properties // [] | map(select(.type=="olm.package") | .value.version) | .[0]) // (.name | sub("^.*\\.v"; "") | sub("-.*$"; ""))), .name ] | @tsv' | sort -t $'\t' -k2,2Vr | head -n "$limit")
+            done
+        else
+            while IFS=$'\t' read -r package ver; do
+                print_table_row "$package" "$ver" 55 45
+                ((count++))
+            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.bundle")|[.package,.name])|@tsv')
+        fi
     else
         for package in ${packages[@]}; do
-            while IFS=$'\t' read -r pkg ver; do
-                print_table_row "$pkg" "$ver" 55 45
-                ((count++))
-            done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.bundle" and .package=="'$package'")|[.package,.name])|@tsv')
+            if [ -n "$limit" ]; then
+                while IFS=$'\t' read -r pkg version name; do
+                    print_table_row "$pkg" "$name" 55 45
+                    ((count++))
+                done < <(cat "$json_file" | jq -cr 'select(.schema=="olm.bundle" and .package=="'$package'") | [ .package, ((.properties // [] | map(select(.type=="olm.package") | .value.version) | .[0]) // (.name | sub("^.*\\.v"; "") | sub("-.*$"; ""))), .name ] | @tsv' | sort -t $'\t' -k2,2Vr | head -n "$limit")
+            else
+                while IFS=$'\t' read -r pkg ver; do
+                    print_table_row "$pkg" "$ver" 55 45
+                    ((count++))
+                done < <(cat "$json_file" | jq -cr '(.|select(.schema=="olm.bundle" and .package=="'$package'")|[.package,.name])|@tsv')
+            fi
         done
     fi
     
@@ -310,6 +360,10 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "  ${GREEN}-c${NC} <catalog>   Catalog name (default: redhat-operator)"
     echo -e "  ${GREEN}-i${NC} <image>     Custom catalog index image (overrides -v and -c)"
     echo -e "                   Example: registry.example.com/my-catalog:latest"
+    echo -e "  ${GREEN}-l${NC} <limit>     Limit number of results (default: no limit)"
+    echo -e "                   For packages/channels: limits total results"
+    echo -e "                   For versions/hub/cloudran: limits versions per package"
+    echo -e "                   Example: -l 5 versions shows 5 versions per package"
     echo -e "  ${GREEN}-h${NC}             Show this help message"
     echo
     echo -e "${BOLD}Commands:${NC}"
@@ -329,6 +383,7 @@ if [ -z "$cmd" ] || [ $show_help -eq 1 ]; then
     echo -e "  ${CYAN}$0 -v sha256:78c4590eaa7a... packages${NC}       # Use SHA256 digest"
     echo -e "  ${CYAN}$0 -c certified-operator packages${NC}           # Different catalog"
     echo -e "  ${CYAN}$0 -i registry.example.com/my-catalog:v1.0 packages${NC} # Custom index"
+    echo -e "  ${CYAN}$0 -l 5 versions ptp-operator${NC}               # Show 5 versions for ptp-operator"
     echo -e "  ${CYAN}$0 -v 4.18 -c redhat-operator packages ptp-operator cluster-logging${NC}"
     echo -e "  ${CYAN}$0 -c certified-operator packages sriov-fec${NC} # Certified operator"
     echo -e "  ${CYAN}$0 hub${NC}                                       # List all hub operator versions"
