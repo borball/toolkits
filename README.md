@@ -18,6 +18,30 @@ Automatically downloads kubeconfigs from all managed clusters in the hub cluster
 
 **📖 [View Documentation](./download-mcl-kubeconfigs-readme.md)**
 
+### 🔄 ClusterGroupUpgrade (CGU) Creator
+**Script:** `create-cgu.sh`
+
+Create ClusterGroupUpgrades for remediating non-compliant policies in OpenShift clusters. Automatically fetches and sorts policies by wave annotation, or accepts manual policy lists.
+
+**Usage:**
+```bash
+# Auto-fetch all non-compliant policies
+./create-cgu.sh sno171
+
+# Manual policy specification
+./create-cgu.sh sno171 vdu2-4.20-p1d1-reduce vdu2-4.20-p1d1-ptp-sub
+```
+
+### 🔌 SSH to Cluster Node
+**Script:** `ssh0.sh`
+
+Quick SSH access to cluster nodes using kubeconfig files. Automatically resolves the node IP and connects via SSH.
+
+**Usage:**
+```bash
+./ssh0.sh <cluster-name>
+```
+
 ## 🚀 Quick Start
 
 ```bash
@@ -26,6 +50,12 @@ Automatically downloads kubeconfigs from all managed clusters in the hub cluster
 
 # Download all managed cluster kubeconfigs
 ./download-mcl-kubeconfigs.sh
+
+# Create CGU for non-compliant policies
+./create-cgu.sh sno171
+
+# SSH to a cluster node
+./ssh0.sh sno171
 ```
 
 ## 📋 Prerequisites
@@ -34,4 +64,6 @@ Automatically downloads kubeconfigs from all managed clusters in the hub cluster
 - **OPM CLI (opm)** - Required for operator catalog tool  
 - **jq** - JSON processor for parsing catalog data
 - **Bash 4.0+** - For color support and array handling
-- **Hub cluster access** - Required for downloading managed cluster kubeconfigs
+- **Hub cluster access** - Required for downloading managed cluster kubeconfigs and creating CGUs
+- **SSH access** - Required for ssh0.sh script to connect to cluster nodes
+- **Kubeconfig files in /etc/kubes/** - Required for ssh0.sh script (format: kubeconfig-<cluster>.yaml)
