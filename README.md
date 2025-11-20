@@ -41,29 +41,3 @@ Quick SSH access to cluster nodes using kubeconfig files. Automatically resolves
 ```bash
 ./ssh0.sh <cluster-name>
 ```
-
-## 🚀 Quick Start
-
-```bash
-# Explore operator catalog with beautiful formatting
-./oc-catalog.sh 4.18 redhat-operator packages ptp-operator cluster-logging
-
-# Download all managed cluster kubeconfigs
-./download-mcl-kubeconfigs.sh
-
-# Create CGU for non-compliant policies
-./create-cgu.sh sno171
-
-# SSH to a cluster node
-./ssh0.sh sno171
-```
-
-## 📋 Prerequisites
-
-- **OpenShift CLI (oc)** - Required for cluster operations
-- **OPM CLI (opm)** - Required for operator catalog tool  
-- **jq** - JSON processor for parsing catalog data
-- **Bash 4.0+** - For color support and array handling
-- **Hub cluster access** - Required for downloading managed cluster kubeconfigs and creating CGUs
-- **SSH access** - Required for ssh0.sh script to connect to cluster nodes
-- **Kubeconfig files in /etc/kubes/** - Required for ssh0.sh script (format: kubeconfig-<cluster>.yaml)
