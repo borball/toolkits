@@ -346,7 +346,7 @@ hub() {
 
 cloudran() {
     # Set packages array with cloudran packages and call versions function
-    packages=("ptp-operator" "sriov-network-operator" "local-storage-operator" "cluster-logging" "lifecycle-agent" "redhat-oadp-operator")
+    packages=("ptp-operator" "sriov-network-operator" "local-storage-operator" "lvms-operator" "cluster-logging" "lifecycle-agent" "redhat-oadp-operator")
     versions
 }
 
